@@ -7,6 +7,7 @@ use std::error::Error;
 struct BingoBoard {
     board: Array2<u32>,
     marked: Array2<bool>,
+    won: bool,
 }
 
 impl BingoBoard {
@@ -34,11 +35,17 @@ impl BingoBoard {
         Ok(Self {
             marked: Array2::from_elem(board.raw_dim(), false),
             board,
+            won: false,
         })
     }
 
     /// Apply the given bingo number to the board. Returns true if the board has won
     fn apply_draw(&mut self, draw: u32) -> bool {
+        // Only continue to apply draws, if the board has not won yet
+        if self.won {
+            return true;
+        }
+
         // find the index of the draw, if present
         let index = self.board.indexed_iter().fold(None, |res, (index, elem)| {
             // check if element is equal to draw
@@ -56,9 +63,11 @@ impl BingoBoard {
         let won = self.marked.rows().into_iter().fold(false, |res, row| {
             row.into_iter().fold(true, |r, e| r & e) | res
         });
-        self.marked.columns().into_iter().fold(won, |res, col| {
+        self.won = self.marked.columns().into_iter().fold(won, |res, col| {
             col.into_iter().fold(true, |r, e| r & e) | res
-        })
+        });
+
+        self.won
     }
 
     /// Calculate the score of the board
@@ -73,7 +82,7 @@ impl BingoBoard {
 /// Executes the exercise of day 4
 pub async fn execute<E: Error + 'static>(
     input: impl Stream<Item = Result<String, E>>,
-) -> Result<Vec<u32>, Box<dyn Error>> {
+) -> Result<[u32; 2], Box<dyn Error>> {
     pin_mut!(input);
 
     // read the first line to extract the drawn bingo numbers
@@ -93,17 +102,24 @@ pub async fn execute<E: Error + 'static>(
         boards.push(BingoBoard::from_lines(lines)?);
     }
 
-    // apply the drawn numbers to each board
-    let mut results = Vec::new();
-    'outer: for draw in draws {
+    // apply the drawn numbers to each board and find
+    let mut first = None;
+    let mut last = None;
+    for draw in draws {
         for board in &mut boards {
             // apply draw and if the board has won, calculate final score
             if board.apply_draw(draw) {
-                results.push(board.score() * draw);
-                break 'outer;
+                let score = board.score() * draw;
+                if first.is_none() {
+                    first = Some(score);
+                }
+                last = Some(score);
             }
         }
+
+        // Throw away boards that have already won
+        boards.retain(|b| !b.won);
     }
 
-    Ok(results)
+    Ok([first.unwrap(), last.unwrap()])
 }
