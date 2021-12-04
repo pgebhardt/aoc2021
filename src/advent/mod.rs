@@ -2,11 +2,15 @@ use futures::prelude::*;
 use std::{error::Error, path::Path};
 use strum::{Display, EnumString};
 
+mod day01;
 mod day04;
 
 /// The day of the AdventOfCode calender to execut
 #[derive(Debug, EnumString, Display)]
 pub enum CalenderDay {
+    #[strum(serialize = "01")]
+    One,
+    #[strum(serialize = "04")]
     Four,
 }
 
@@ -17,6 +21,7 @@ impl CalenderDay {
         input: impl Stream<Item = Result<String, E>>,
     ) -> Result<[u32; 2], Box<dyn Error>> {
         match self {
+            Self::One => day01::execute(input).await,
             Self::Four => day04::execute(input).await,
         }
     }
@@ -24,6 +29,7 @@ impl CalenderDay {
     /// Get the path to the input file
     pub fn input_path(&self) -> &Path {
         match self {
+            Self::One => "input1.txt",
             Self::Four => "input4.txt",
         }
         .as_ref()
