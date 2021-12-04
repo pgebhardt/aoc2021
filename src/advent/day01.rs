@@ -1,7 +1,7 @@
 use futures::{pin_mut, prelude::*};
 use std::{collections::VecDeque, error::Error};
 
-/// Executes the exercise of day 4
+/// Executes the exercise of day 01
 pub async fn execute<E: Error + 'static>(
     input: impl Stream<Item = Result<String, E>>,
 ) -> Result<[u32; 2], Box<dyn Error>> {
