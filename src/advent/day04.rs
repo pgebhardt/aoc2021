@@ -60,12 +60,13 @@ impl BingoBoard {
         }
 
         // check if board has won
-        let won = self.marked.rows().into_iter().fold(false, |res, row| {
+        self.won = self.marked.rows().into_iter().fold(false, |res, row| {
             row.into_iter().fold(true, |r, e| r & e) | res
         });
-        self.won = self.marked.columns().into_iter().fold(won, |res, col| {
-            col.into_iter().fold(true, |r, e| r & e) | res
-        });
+        self.won = self.won
+            || self.marked.columns().into_iter().fold(false, |res, col| {
+                col.into_iter().fold(true, |r, e| r & e) | res
+            });
 
         self.won
     }
@@ -75,7 +76,9 @@ impl BingoBoard {
         self.board
             .iter()
             .zip(self.marked.iter())
-            .fold(0, |res, (e, m)| if !*m { res + *e } else { res })
+            .filter(|(_, &marked)| !marked)
+            .map(|(elem, _)| elem)
+            .sum()
     }
 }
 
@@ -84,6 +87,9 @@ pub async fn execute<E: Error + 'static>(
     input: impl Stream<Item = Result<String, E>>,
 ) -> Result<[u32; 2], Box<dyn Error>> {
     pin_mut!(input);
+
+    // fuse the input stream to see if new lines are still readable
+    let mut input = input.fuse();
 
     // read the first line to extract the drawn bingo numbers
     let draws: Vec<u32> = input
@@ -94,12 +100,18 @@ pub async fn execute<E: Error + 'static>(
         .map(|draw| draw.parse().unwrap())
         .collect();
 
-    // read in bingo boards as long as empty lines are available
+    // read in bingo boards as long as new lines are available
     let mut boards = Vec::new();
-    while let Some(_) = input.try_next().await? {
-        // read 5 lines and generate a board
-        let lines: Vec<_> = input.by_ref().take(5).try_collect().await?;
-        boards.push(BingoBoard::from_lines(lines)?);
+    while !input.is_done() {
+        // read all line until an empty line and generate a board
+        let lines: Vec<_> = input
+            .by_ref()
+            .try_take_while(|elem| future::ok(!elem.is_empty()))
+            .try_collect()
+            .await?;
+        if !lines.is_empty() {
+            boards.push(BingoBoard::from_lines(lines)?);
+        }
     }
 
     // apply the drawn numbers to each board and find
