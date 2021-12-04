@@ -1,9 +1,10 @@
 use futures::prelude::*;
-use std::{error::Error, path::Path};
+use std::{error::Error, path::PathBuf};
 use strum::{Display, EnumString};
 
 mod day01;
 mod day02;
+mod day03;
 mod day04;
 
 /// The day of the AdventOfCode calender to execut
@@ -13,6 +14,8 @@ pub enum CalenderDay {
     One,
     #[strum(serialize = "02")]
     Two,
+    #[strum(serialize = "03")]
+    Three,
     #[strum(serialize = "04")]
     Four,
 }
@@ -26,17 +29,13 @@ impl CalenderDay {
         match self {
             Self::One => day01::execute(input).await,
             Self::Two => day02::execute(input).await,
+            Self::Three => day03::execute(input).await,
             Self::Four => day04::execute(input).await,
         }
     }
 
     /// Get the path to the input file
-    pub fn input_path(&self) -> &Path {
-        match self {
-            Self::One => "input01.txt",
-            Self::Two => "input02.txt",
-            Self::Four => "input04.txt",
-        }
-        .as_ref()
+    pub fn input_path(&self) -> PathBuf {
+        format!("input{}.txt", self).into()
     }
 }
