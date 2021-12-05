@@ -1,3 +1,4 @@
+use cgmath::{prelude::*, Vector2};
 use futures::{pin_mut, prelude::*};
 use logos::{Lexer, Logos};
 use ndarray::{Array2, ArrayViewMut2};
@@ -23,6 +24,7 @@ enum LineSegment {
 }
 
 /// Helper to extract a coordinate pair from a [LineSegment]
+#[inline]
 fn get_number(segment: &mut Lexer<LineSegment>) -> Option<i32> {
     segment.next().and_then(|s| {
         if let LineSegment::Number(n) = s {
@@ -33,30 +35,35 @@ fn get_number(segment: &mut Lexer<LineSegment>) -> Option<i32> {
     })
 }
 
-/// Helper to render a line segment using Bresenham-Algorithm
-fn render_line(mut grid: ArrayViewMut2<u32>, start: (i32, i32), end: (i32, i32)) {
-    let (mut x1, mut y1) = start;
-    let (x2, y2) = end;
+/// Helper to extract a 2d vector from a [LineSegment]
+#[inline]
+fn get_point(segment: &mut Lexer<LineSegment>) -> Option<Vector2<i32>> {
+    get_number(segment).and_then(|x| get_number(segment).map(|y| Vector2::new(x, y)))
+}
 
-    let dx = (x2 - x1).abs();
-    let sx = if x1 < x2 { 1 } else { -1 };
-    let dy = -(y2 - y1).abs();
-    let sy = if y1 < y2 { 1 } else { -1 };
-    let mut err = dx + dy;
+/// Helper to render a line segment using Bresenham-Algorithm
+fn render_line(mut grid: ArrayViewMut2<u32>, start: Vector2<i32>, end: Vector2<i32>) {
+    // get sloap and step width
+    let delta = Vector2::new((end.x - start.x).abs(), -(end.y - start.y).abs());
+    let step = Vector2::new((end.x - start.x).signum(), (end.y - start.y).signum());
+
+    // render line
+    let mut pos = start;
+    let mut err = delta.sum();
     let mut e2;
     loop {
-        grid[[x1 as usize, y1 as usize]] += 1;
-        if x1 == x2 && y1 == y2 {
+        grid[[pos.x as usize, pos.y as usize]] += 1;
+        if pos == end {
             break;
         }
         e2 = 2 * err;
-        if e2 > dy {
-            err += dy;
-            x1 += sx;
+        if e2 > delta.y {
+            err += delta.y;
+            pos.x += step.x;
         }
-        if e2 < dx {
-            err += dx;
-            y1 += sy;
+        if e2 < delta.x {
+            err += delta.x;
+            pos.y += step.y;
         }
     }
 }
@@ -76,21 +83,14 @@ pub async fn execute<E: Error + 'static>(
         let mut segment = LineSegment::lexer(&line);
 
         // extract start and end of line
-        let start = (
-            get_number(&mut segment).unwrap(),
-            get_number(&mut segment).unwrap(),
-        );
-        // extract start and end of line
-        let end = (
-            get_number(&mut segment).unwrap(),
-            get_number(&mut segment).unwrap(),
-        );
+        let start = get_point(&mut segment).unwrap();
+        let end = get_point(&mut segment).unwrap();
 
         // render all lines in grid 2
         render_line(grid02.view_mut(), start, end);
 
         // render only horizontal/vertical lines in grid 1
-        if start.0 == end.0 || start.1 == end.1 {
+        if start.x == end.x || start.y == end.y {
             render_line(grid01.view_mut(), start, end);
         }
     }
