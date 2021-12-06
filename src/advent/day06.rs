@@ -1,5 +1,5 @@
 use futures::{pin_mut, prelude::*};
-use std::{collections::HashMap, error::Error};
+use std::error::Error;
 
 /// Executes the exercise of day 6
 pub async fn execute<E: Error + 'static>(
@@ -8,42 +8,33 @@ pub async fn execute<E: Error + 'static>(
     pin_mut!(input);
 
     // read in initial population
-    let initial: Vec<i32> = input
+    let mut population = [0u64; 10];
+    input
         .try_next()
         .await?
         .unwrap()
         .split(',')
         .map(|lf| lf.parse().unwrap())
-        .collect();
-    let mut population = HashMap::new();
-    for timer in initial {
-        *population.entry(timer).or_insert(0) += 1;
-    }
+        .for_each(|timer: usize| population[timer] += 1);
 
     // grow population over time
     let mut eighty_days = 0;
     for i in 0..256 {
-        // advance timer
-        let mut next_population = HashMap::new();
-        for (timer, count) in population.iter() {
-            *next_population.entry(timer - 1).or_insert(0) = *count;
-        }
-
         // grow population
-        if let Some(&count) = next_population.get(&-1) {
-            next_population.insert(8, count);
-            *next_population.entry(6).or_insert(0) += count;
-            next_population.remove(&-1);
-        }
-        population = next_population;
+        population[7] += population[0];
+        population[9] = population[0];
 
+        // advance timer
+        for i in 0..9 {
+            population[i] = population[i + 1];
+        }
+        population[9] = 0;
+
+        // capture total population after 80 days
         if i == 79 {
-            eighty_days = population.iter().map(|(_, count)| *count).sum();
+            eighty_days = population.iter().sum();
         }
     }
 
-    Ok([
-        eighty_days,
-        population.iter().map(|(_, count)| *count).sum(),
-    ])
+    Ok([eighty_days, population.iter().sum()])
 }
