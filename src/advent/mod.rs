@@ -7,6 +7,7 @@ mod day02;
 mod day03;
 mod day04;
 mod day05;
+mod day06;
 
 /// The day of the AdventOfCode calender to execut
 #[derive(Debug, EnumString, Display)]
@@ -21,6 +22,8 @@ pub enum CalenderDay {
     Four,
     #[strum(serialize = "05")]
     Five,
+    #[strum(serialize = "06")]
+    Six,
 }
 
 impl CalenderDay {
@@ -35,6 +38,7 @@ impl CalenderDay {
             Self::Three => day03::execute(input).await,
             Self::Four => day04::execute(input).await,
             Self::Five => day05::execute(input).await,
+            Self::Six => day06::execute(input).await,
         }
     }
 
