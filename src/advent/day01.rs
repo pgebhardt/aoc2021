@@ -4,7 +4,7 @@ use std::{collections::VecDeque, error::Error};
 /// Executes the exercise of day 01
 pub async fn execute<E: Error + 'static>(
     input: impl Stream<Item = Result<String, E>>,
-) -> Result<[u32; 2], Box<dyn Error>> {
+) -> Result<[u64; 2], Box<dyn Error>> {
     pin_mut!(input);
 
     // Iterate over each line and calculate metrics

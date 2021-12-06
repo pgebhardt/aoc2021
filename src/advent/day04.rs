@@ -85,7 +85,7 @@ impl BingoBoard {
 /// Executes the exercise of day 4
 pub async fn execute<E: Error + 'static>(
     input: impl Stream<Item = Result<String, E>>,
-) -> Result<[u32; 2], Box<dyn Error>> {
+) -> Result<[u64; 2], Box<dyn Error>> {
     pin_mut!(input);
 
     // fuse the input stream to see if new lines are still readable
@@ -133,5 +133,5 @@ pub async fn execute<E: Error + 'static>(
         boards.retain(|b| !b.won);
     }
 
-    Ok([first.unwrap(), last.unwrap()])
+    Ok([first.unwrap() as u64, last.unwrap() as u64])
 }

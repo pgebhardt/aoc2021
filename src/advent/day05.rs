@@ -71,7 +71,7 @@ fn render_line(mut grid: ArrayViewMut2<u32>, start: Vector2<i32>, end: Vector2<i
 /// Executes the exercise of day 5
 pub async fn execute<E: Error + 'static>(
     input: impl Stream<Item = Result<String, E>>,
-) -> Result<[u32; 2], Box<dyn Error>> {
+) -> Result<[u64; 2], Box<dyn Error>> {
     pin_mut!(input);
 
     // read in all line segments and add a one to each field

@@ -65,7 +65,7 @@ impl Submarine {
 /// Executes the exercise of day 02
 pub async fn execute<E: Error + 'static>(
     input: impl Stream<Item = Result<String, E>>,
-) -> Result<[u32; 2], Box<dyn Error>> {
+) -> Result<[u64; 2], Box<dyn Error>> {
     pin_mut!(input);
 
     // Iterate over each line and update submarine position accordingly
@@ -89,5 +89,5 @@ pub async fn execute<E: Error + 'static>(
         }
     }
 
-    Ok([submarines.0.score(), submarines.1.score()])
+    Ok([submarines.0.score() as u64, submarines.1.score() as u64])
 }

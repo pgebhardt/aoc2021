@@ -161,7 +161,7 @@ impl DiagnosticCode {
 /// Executes the exercise of day 02
 pub async fn execute<E: Error + 'static>(
     input: impl Stream<Item = Result<String, E>>,
-) -> Result<[u32; 2], Box<dyn Error>> {
+) -> Result<[u64; 2], Box<dyn Error>> {
     pin_mut!(input);
 
     let mut diagnostics = DiagnosticCode::default();
@@ -170,7 +170,7 @@ pub async fn execute<E: Error + 'static>(
     }
 
     Ok([
-        diagnostics.gamma_rate() * diagnostics.epsilon_rate(),
-        (diagnostics.oxygen_generator_rating() * diagnostics.co2_scrubber_rating()) as u32,
+        (diagnostics.gamma_rate() * diagnostics.epsilon_rate()) as u64,
+        (diagnostics.oxygen_generator_rating() * diagnostics.co2_scrubber_rating()) as u64,
     ])
 }

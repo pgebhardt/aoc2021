@@ -31,7 +31,7 @@ impl CalenderDay {
     pub async fn execute<E: Error + 'static>(
         &self,
         input: impl Stream<Item = Result<String, E>>,
-    ) -> Result<[u32; 2], Box<dyn Error>> {
+    ) -> Result<[u64; 2], Box<dyn Error>> {
         match self {
             Self::One => day01::execute(input).await,
             Self::Two => day02::execute(input).await,
