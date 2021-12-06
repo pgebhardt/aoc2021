@@ -8,7 +8,7 @@ pub async fn execute<E: Error + 'static>(
     pin_mut!(input);
 
     // read in initial population
-    let mut population = [0u64; 10];
+    let mut population = [0u64; 9];
     input
         .try_next()
         .await?
@@ -20,15 +20,8 @@ pub async fn execute<E: Error + 'static>(
     // grow population over time
     let mut eighty_days = 0;
     for i in 0..256 {
-        // grow population
-        population[7] += population[0];
-        population[9] = population[0];
-
-        // advance timer
-        for i in 0..9 {
-            population[i] = population[i + 1];
-        }
-        population[9] = 0;
+        population.rotate_left(1);
+        population[6] += population[8];
 
         // capture total population after 80 days
         if i == 79 {
