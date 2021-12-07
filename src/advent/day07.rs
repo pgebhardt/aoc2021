@@ -19,13 +19,14 @@ pub async fn execute<E: Error + 'static>(
     // find aligned position with minimum total fuel consumption part1
     let mut x = crabs.iter().sum::<i32>() / crabs.len() as i32;
     let mut fuel = i32::MAX;
+    let lr_inv = crabs.len() as i32;
     loop {
         // calculate loss and update horizontal position using simple gradient descent
-        let grad: i32 = crabs.iter().map(|c| -(*c - x).signum() * x).sum();
-        x -= grad.signum();
+        let grad: i32 = crabs.iter().map(|&c| -(c - x).signum() * x).sum();
+        x -= grad.signum() * (grad.abs() / lr_inv).max(1);
 
         // calculate loss and update fuel or exit loop, if needed
-        let loss: i32 = crabs.iter().map(|c| (*c - x).abs()).sum();
+        let loss: i32 = crabs.iter().map(|&c| (c - x).abs()).sum();
         if loss < fuel {
             fuel = loss;
         } else {
@@ -35,19 +36,20 @@ pub async fn execute<E: Error + 'static>(
 
     // find aligned position with minimum total fuel consumption part2
     let mut fuel2 = i32::MAX;
+    let lr_inv = (crabs.len() * crabs.len()) as i32;
     loop {
         // calculate loss and update horizontal position using simple gradient descent
         let grad: i32 = -crabs
             .iter()
-            .map(|c| (*c - x).signum() * x * (*c - x).abs())
+            .map(|&c| (c - x).signum() * x * (c - x).abs())
             .sum::<i32>()
             / 2;
-        x -= grad.signum();
+        x -= grad.signum() * (grad.abs() / lr_inv).max(1);
 
         // calculate loss and update fuel or exit loop, if needed
         let loss = crabs
             .iter()
-            .map(|c| (*c - x).abs())
+            .map(|&c| (c - x).abs())
             .map(|d| d * (d + 1))
             .sum::<i32>()
             / 2;
