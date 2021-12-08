@@ -28,10 +28,14 @@ pub async fn execute<E: Error + 'static>(
         // for a more efficient calculation
         window.push_back(line);
         sum += line;
-        if window.len() > 3 {
-            sum -= window.pop_front().unwrap();
-        } else if window.len() < 3 {
-            continue;
+        match window.len().cmp(&3) {
+            std::cmp::Ordering::Greater => {
+                sum -= window.pop_front().unwrap();
+            }
+            std::cmp::Ordering::Less => {
+                continue;
+            }
+            _ => {}
         }
 
         // check if sum of window has increased
