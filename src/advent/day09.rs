@@ -23,10 +23,7 @@ pub async fn execute<E: Error + 'static>(
         }
 
         // add row, or construct map
-        map.as_mut()
-            .unwrap()
-            .push_row(ArrayView::from(&row))
-            .unwrap();
+        map.as_mut().unwrap().push_row(ArrayView::from(&row))?;
     }
     let map = map.unwrap();
 
@@ -49,20 +46,10 @@ pub async fn execute<E: Error + 'static>(
     }
     let risk: u32 = lows.iter().map(|((_, _), v)| 1 + v).sum();
 
-    // Find the basin for each point
+    // Find the basin for each point, while ignoring points with height 9
     let mut basins = HashMap::new();
-    for ((i, j), v) in map.indexed_iter() {
-        // skip points with a 9
-        if *v == 9 {
-            continue;
-        }
-
-        // low points automatically belong to their basin
-        if lows.contains_key(&(i, j)) {
-            *basins.entry((i, j)).or_insert(0u32) += 1;
-            continue;
-        }
-
+    for ((i, j), v) in map.indexed_iter().filter(|(_, &v)| v != 9) {
+        // follow the gradient until a low point has been reached
         let (mut x, mut y) = (i, j);
         loop {
             // exit, if x and y have reached a low point
@@ -71,7 +58,7 @@ pub async fn execute<E: Error + 'static>(
                 break;
             }
 
-            // find the direction of steepest decline
+            // find the direction of steepest decline and move towards it
             let mut dir = (x, y, *v);
             if x > 0 && map[[x - 1, y]] < dir.2 {
                 dir = (x - 1, y, map[[x - 1, y]]);
@@ -89,6 +76,8 @@ pub async fn execute<E: Error + 'static>(
             y = dir.1;
         }
     }
+
+    // sort the basins by its size
     let mut basin_size: Vec<_> = basins.iter().map(|(_, size)| *size).collect();
     basin_size.sort_unstable();
 
