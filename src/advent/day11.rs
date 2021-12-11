@@ -39,7 +39,7 @@ pub async fn execute<E: Error + 'static>(
         map += 1;
 
         loop {
-            // flash octopusses with energy above 9
+            // flash octopuses with energy above 9
             let new_flashes: Vec<_> = map
                 .indexed_iter()
                 .zip(flashed.iter_mut())
@@ -50,7 +50,7 @@ pub async fn execute<E: Error + 'static>(
                 })
                 .collect();
 
-            // increase the energy level of all octopusses adjacent to the flash
+            // increase the energy level of all octopuses adjacent to the flash
             for (i, j) in &new_flashes {
                 let left = if *i > 0 { i - 1 } else { 0 };
                 let right = (i + 2).min(map.shape()[0]);
@@ -60,25 +60,25 @@ pub async fn execute<E: Error + 'static>(
                     .map_inplace(|e| *e += 1);
             }
 
-            // break the loop, if no new octopusses flashed
+            // break the loop, if no new octopuses flashed
             if new_flashes.is_empty() {
                 break;
             }
         }
 
-        // reset energy of flashed octopusses
+        // reset energy of flashed octopuses
         map.iter_mut()
             .zip(flashed.iter())
             .filter(|(_, &f)| f)
             .for_each(|(e, _)| *e = 0);
 
-        // count flashed octopusses
+        // count flashed octopuses
         let flashes = flashed.iter().filter(|f| **f).count() as u64;
         if i < 100 {
             flashes_100 += flashes;
         }
 
-        // exit simulation, if all octopusses flash
+        // exit simulation, if all octopuses flash
         if flashes == map.shape().iter().product::<usize>() as u64 {
             all_flash = i + 1;
             break;
