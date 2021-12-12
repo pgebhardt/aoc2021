@@ -7,23 +7,21 @@ const END: &str = "end";
 
 /// A path trough the cave system
 #[derive(Clone, Debug)]
-struct Path {
-    path: String,
-    pos: String,
-    histogram: HashMap<String, usize>,
+struct Path<'a> {
+    pos: &'a str,
+    histogram: HashMap<&'a str, usize>,
     ended: bool,
     progressed: bool,
 }
 
-impl Path {
+impl<'a> Path<'a> {
     /// Create a new path an the start of the cave system
     fn new() -> Self {
         let mut histogram = HashMap::new();
-        histogram.insert(START.to_owned(), 1);
+        histogram.insert(START, 1);
 
         Self {
-            path: START.to_owned(),
-            pos: START.to_owned(),
+            pos: START,
             histogram,
             ended: false,
             progressed: false,
@@ -31,25 +29,19 @@ impl Path {
     }
 
     /// Progress the path to the new location
-    fn progress(&mut self, pos: &str) {
+    fn progress(&mut self, pos: &'a str) {
         // ended paths cannot progress
         if self.ended {
             return;
         }
 
-        // update position and total path
-        self.pos = pos.to_owned();
-        self.path.push('-');
-        self.path.push_str(pos);
+        // update current position and mark path as progressed
+        self.pos = pos;
         self.progressed = true;
 
         // update histogramm of small caves
         if pos.chars().all(char::is_lowercase) {
-            if let Some(cave) = self.histogram.get_mut(pos) {
-                *cave += 1;
-            } else {
-                self.histogram.insert(pos.to_owned(), 1);
-            }
+            *self.histogram.entry(pos).or_default() += 1;
         }
 
         // check, if path has ended
@@ -58,6 +50,7 @@ impl Path {
         }
     }
 }
+
 /// Walk through all possible paths
 fn walk_paths(caves: &HashMap<String, Vec<String>>, valid: impl Fn(&Path) -> bool) -> Vec<Path> {
     // Start one path at the beginning
@@ -76,7 +69,7 @@ fn walk_paths(caves: &HashMap<String, Vec<String>>, valid: impl Fn(&Path) -> boo
 
             // branch out to all possible connections
             let path = paths[i].clone();
-            for (j, con) in (&caves[&path.pos]).iter().enumerate() {
+            for (j, con) in caves[path.pos].iter().enumerate() {
                 // build new path and skip it, if it already exists
                 let mut path = path.clone();
                 path.progress(con);
@@ -121,7 +114,7 @@ fn valid_part_2(path: &Path) -> bool {
     // verify hist
     let mut twice = false;
     for (con, &count) in &path.histogram {
-        if con == START && count > 1 {
+        if *con == START && count > 1 {
             return false;
         }
         if count > 2 {
