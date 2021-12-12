@@ -71,8 +71,9 @@ fn walk_paths(
             paths[i].progressed = false;
 
             // branch out to all possible connections
+            let mut first = true;
             let path = paths[i].clone();
-            for (j, con) in caves[path.pos].iter().enumerate() {
+            for con in &caves[path.pos] {
                 // verify path
                 if !valid(&path, con) {
                     continue;
@@ -80,8 +81,9 @@ fn walk_paths(
                 progressed = true;
 
                 // progress and replace the existing path or add new path to the vecotr
-                if j == 0 {
+                if first {
                     paths[i].progress(con);
+                    first = false;
                 } else {
                     paths.push(path.clone());
                     paths.last_mut().unwrap().progress(con);
@@ -118,7 +120,7 @@ fn valid_part_2(path: &Path, cave: &str) -> bool {
         }
 
         // check, if there is another cave which was visited twice
-        if path.histogram.iter().any(|(_, count)| *count > 1) {
+        if path.histogram.values().any(|count| *count > 1) {
             return false;
         }
     }
