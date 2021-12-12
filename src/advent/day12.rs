@@ -115,7 +115,7 @@ fn valid_part_2(path: &Path, cave: &str) -> bool {
     // verify hist
     if path.histogram.contains_key(cave) {
         // "start" can only be visited once
-        if cave == "start" {
+        if cave == START {
             return false;
         }
 
