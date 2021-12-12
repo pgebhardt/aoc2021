@@ -17,12 +17,9 @@ struct Path<'a> {
 impl<'a> Path<'a> {
     /// Create a new path an the start of the cave system
     fn new() -> Self {
-        let mut histogram = HashMap::new();
-        histogram.insert(START, 1);
-
         Self {
             pos: START,
-            histogram,
+            histogram: HashMap::from([(START, 1)]),
             ended: false,
             progressed: false,
         }
@@ -60,9 +57,11 @@ fn walk_paths(
     let mut paths = vec![Path::new()];
 
     // walk paths as long as there is progress
-    loop {
+    let mut progressed = true;
+    while progressed {
+        progressed = false;
+
         // advance each path
-        let mut progressed = false;
         for i in 0..paths.len() {
             // skip paths, which already ended
             if paths[i].ended {
@@ -93,11 +92,6 @@ fn walk_paths(
 
         // get rid of all paths, that did not progress at all
         paths.retain(|path| path.progressed || path.ended);
-
-        // end if there is no progress
-        if !progressed {
-            break;
-        }
     }
 
     paths
