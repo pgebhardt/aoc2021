@@ -52,7 +52,10 @@ impl<'a> Path<'a> {
 }
 
 /// Walk through all possible paths
-fn walk_paths(caves: &HashMap<String, Vec<String>>, valid: impl Fn(&Path) -> bool) -> Vec<Path> {
+fn walk_paths(
+    caves: &HashMap<String, Vec<String>>,
+    valid: impl Fn(&Path, &str) -> bool,
+) -> Vec<Path> {
     // Start one path at the beginning
     let mut paths = vec![Path::new()];
 
@@ -70,21 +73,18 @@ fn walk_paths(caves: &HashMap<String, Vec<String>>, valid: impl Fn(&Path) -> boo
             // branch out to all possible connections
             let path = paths[i].clone();
             for (j, con) in caves[path.pos].iter().enumerate() {
-                // build new path and skip it, if it already exists
-                let mut path = path.clone();
-                path.progress(con);
-
                 // verify path
-                if !valid(&path) {
+                if !valid(&path, con) {
                     continue;
                 }
                 progressed = true;
 
-                // replace the existing path or add new path to the vecotr
+                // progress and replace the existing path or add new path to the vecotr
                 if j == 0 {
-                    paths[i] = path;
+                    paths[i].progress(con);
                 } else {
-                    paths.push(path);
+                    paths.push(path.clone());
+                    paths.last_mut().unwrap().progress(con);
                 }
             }
         }
@@ -98,34 +98,28 @@ fn walk_paths(caves: &HashMap<String, Vec<String>>, valid: impl Fn(&Path) -> boo
         }
     }
 
-    // filter paths that end at "end"
-    paths.into_iter().filter(|p| p.ended).collect()
+    paths
 }
 
 /// Validator for part 1
 #[inline]
-fn valid_part_1(path: &Path) -> bool {
-    !path.histogram.iter().any(|(_, &v)| v > 1)
+fn valid_part_1(path: &Path, cave: &str) -> bool {
+    !path.histogram.contains_key(cave)
 }
 
 /// Validator for part 2
 #[inline]
-fn valid_part_2(path: &Path) -> bool {
+fn valid_part_2(path: &Path, cave: &str) -> bool {
     // verify hist
-    let mut twice = false;
-    for (con, &count) in &path.histogram {
-        if *con == START && count > 1 {
+    if path.histogram.contains_key(cave) {
+        // "start" can only be visited once
+        if cave == "start" {
             return false;
         }
-        if count > 2 {
+
+        // check, if there is another cave which was visited twice
+        if path.histogram.iter().any(|(_, count)| *count > 1) {
             return false;
-        }
-        if count > 1 {
-            if twice {
-                return false;
-            } else {
-                twice = true;
-            }
         }
     }
 
