@@ -1,99 +1,127 @@
 use futures::{pin_mut, prelude::*};
 use std::{collections::HashMap, error::Error};
 
+/// Some common cave names
+const START: &str = "start";
+const END: &str = "end";
+
+/// A path trough the cave system
+#[derive(Clone, Debug)]
+struct Path {
+    path: String,
+    pos: String,
+    histogram: HashMap<String, usize>,
+    ended: bool,
+    progressed: bool,
+}
+
+impl Path {
+    /// Create a new path an the start of the cave system
+    fn new() -> Self {
+        let mut histogram = HashMap::new();
+        histogram.insert(START.to_owned(), 1);
+
+        Self {
+            path: START.to_owned(),
+            pos: START.to_owned(),
+            histogram,
+            ended: false,
+            progressed: false,
+        }
+    }
+
+    /// Progress the path to the new location
+    fn progress(&mut self, pos: &str) {
+        // ended paths cannot progress
+        if self.ended {
+            return;
+        }
+
+        // update position and total path
+        self.pos = pos.to_owned();
+        self.path.push('-');
+        self.path.push_str(pos);
+        self.progressed = true;
+
+        // update histogramm of small caves
+        if pos.chars().all(char::is_lowercase) {
+            if let Some(cave) = self.histogram.get_mut(pos) {
+                *cave += 1;
+            } else {
+                self.histogram.insert(pos.to_owned(), 1);
+            }
+        }
+
+        // check, if path has ended
+        if pos == END {
+            self.ended = true;
+        }
+    }
+}
 /// Walk through all possible paths
-fn walk_paths(caves: &HashMap<String, Vec<String>>, valid: impl Fn(&str) -> bool) -> Vec<String> {
+fn walk_paths(caves: &HashMap<String, Vec<String>>, valid: impl Fn(&Path) -> bool) -> Vec<Path> {
     // Start one path at the beginning
-    let mut paths = vec!["start".to_owned()];
+    let mut paths = vec![Path::new()];
 
     // walk paths as long as there is progress
-    let mut progress = Vec::new();
     loop {
-        progress.clear();
-
         // advance each path
+        let mut progressed = false;
         for i in 0..paths.len() {
             // skip paths, which already ended
-            if paths[i].ends_with("end") {
+            if paths[i].ended {
                 continue;
             }
-
-            // get current position in cave system
-            let pos = paths[i].split('-').last().unwrap().to_owned();
+            paths[i].progressed = false;
 
             // branch out to all possible connections
-            let history = paths[i].clone();
-            for (j, con) in (&caves[&pos]).into_iter().enumerate() {
+            let path = paths[i].clone();
+            for (j, con) in (&caves[&path.pos]).iter().enumerate() {
                 // build new path and skip it, if it already exists
-                let path = format!("{}-{}", history, con);
-                if paths.contains(&path) {
-                    continue;
-                }
+                let mut path = path.clone();
+                path.progress(con);
 
                 // verify path
                 if !valid(&path) {
                     continue;
                 }
+                progressed = true;
 
-                // walk each path to the connection, if path not already exists
+                // replace the existing path or add new path to the vecotr
                 if j == 0 {
                     paths[i] = path;
-                    progress.push(i);
                 } else {
                     paths.push(path);
-                    progress.push(paths.len() - 1);
                 }
             }
         }
 
         // get rid of all paths, that did not progress at all
-        let mut index = 0usize;
-        paths.retain(|path| {
-            index += 1;
-            progress.contains(&(index - 1)) || path.ends_with("end")
-        });
+        paths.retain(|path| path.progressed || path.ended);
 
         // end if there is no progress
-        if progress.is_empty() {
+        if !progressed {
             break;
         }
     }
 
     // filter paths that end at "end"
-    paths.into_iter().filter(|p| p.ends_with("end")).collect()
+    paths.into_iter().filter(|p| p.ended).collect()
 }
 
 /// Validator for part 1
 #[inline]
-fn valid_part_1(path: &str) -> bool {
-    // build histogram
-    let mut hist = HashMap::new();
-    for pos in path
-        .split('-')
-        .filter(|c| c.chars().all(|c| c.is_lowercase()))
-    {
-        *hist.entry(pos.to_owned()).or_insert(0i32) += 1;
-    }
-
-    !hist.into_values().any(|v| v > 1)
+fn valid_part_1(path: &Path) -> bool {
+    !path.histogram.iter().any(|(_, &v)| v > 1)
 }
 
 /// Validator for part 2
 #[inline]
-fn valid_part_2(path: &str) -> bool {
-    // build histogram
-    let mut hist = HashMap::new();
-    for pos in path
-        .split('-')
-        .filter(|c| c.chars().all(|c| c.is_lowercase()))
-    {
-        *hist.entry(pos.to_owned()).or_insert(0i32) += 1;
-    }
-
+fn valid_part_2(path: &Path) -> bool {
     // verify hist
     let mut twice = false;
-    for (con, count) in hist {
-        if con == "start" && count > 1 {
+    for (con, &count) in &path.histogram {
+        if con == START && count > 1 {
             return false;
         }
         if count > 2 {
