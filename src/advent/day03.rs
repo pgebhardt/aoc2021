@@ -73,10 +73,6 @@ impl DiagnosticCode {
 
             let (mut zero, mut one) = (0, 0);
             let pow = 2u64.pow(pos);
-            println!("pow: {:b}", pow);
-            for entry in entries.iter() {
-                println!("{}: {:b}", entry.0 + 1, entry.1);
-            }
 
             // get most common digit
             for (_, entry) in entries.iter() {
@@ -86,7 +82,6 @@ impl DiagnosticCode {
                     zero += 1;
                 }
             }
-            dbg!(zero, one);
             let mcd = if one >= zero { 1 } else { 0 };
 
             // filter entries
@@ -102,11 +97,9 @@ impl DiagnosticCode {
                     }
                 })
                 .collect();
-
-            dbg!(entries.len());
         }
 
-        dbg!(self.entries[dbg!(entries[0].0)])
+        self.entries[dbg!(entries[0].0)]
     }
 
     fn co2_scrubber_rating(&self) -> u64 {
@@ -121,10 +114,6 @@ impl DiagnosticCode {
 
             let (mut zero, mut one) = (0, 0);
             let pow = 2u64.pow(pos);
-            println!("pow: {:b}", pow);
-            for entry in entries.iter() {
-                println!("{}: {:b}", entry.0 + 1, entry.1);
-            }
 
             // get most common digit
             for (_, entry) in entries.iter() {
@@ -134,7 +123,6 @@ impl DiagnosticCode {
                     zero += 1;
                 }
             }
-            dbg!(zero, one);
             let mcd = if one < zero { 1 } else { 0 };
 
             // filter entries
@@ -150,11 +138,9 @@ impl DiagnosticCode {
                     }
                 })
                 .collect();
-
-            dbg!(entries.len());
         }
 
-        dbg!(self.entries[dbg!(entries[0].0)])
+        self.entries[dbg!(entries[0].0)]
     }
 }
 
