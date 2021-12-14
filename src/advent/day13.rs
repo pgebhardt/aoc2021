@@ -84,7 +84,7 @@ pub async fn execute<E: Error + 'static>(
                 print!(" ");
             }
         }
-        print!("\n");
+        println!();
     }
     println!("--- end ---\n");
 
